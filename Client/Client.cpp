@@ -319,42 +319,18 @@ void quit(int sockfd)
 // 登录，并且构造的报文形式为“用户名 密码”，以该形式作为参数传递给服务器
 void login(int sockfd)
 {
-    int sin_size;
-    int nRead;
     CmdPacket cmd_packet;
-    SOCKET newsockfd, data_sockfd;
-    struct sockaddr_in their_addr;
+    RspnsPacket rspns_packet;
+
     char name_and_passwd[50];
-    char databuf[DATA_BUFSIZE];
-
-    // 创建数据连接并侦听服务器的连接请求：
-    newsockfd = create_data_socket();
-
-    // 输入用户名和密码
     scanf("%s", &name_and_passwd);
-
-    // 构建登录命令报文并发送
+    name_and_passwd[strcspn(name_and_passwd, "\r\n")] = '\0';  // 去掉字符串末尾的换行符
     cmd_packet.cmdid = LOGIN;
     strcpy(cmd_packet.param, name_and_passwd);
     do_write_cmd(sockfd, &cmd_packet);
-    sin_size = sizeof(struct sockaddr_in);
-    if ((data_sockfd = accept(newsockfd, (struct sockaddr *) &their_addr, &sin_size)) == INVALID_SOCKET)
-    {
-        printf("登录失败！\n");
-        closesocket(newsockfd);
-        return;
-    }
-    // 读取服务器的回复报文
-    nRead = recv(data_sockfd, databuf, DATA_BUFSIZE, 0);
-    databuf[nRead] = '\0';
-    if (nRead <= 0)
-    {
-        printf("登录失败！\n");
-        closesocket(newsockfd);
-        closesocket(data_sockfd);
-        return;
-    }
-    printf("%s", databuf);
+
+    do_read_rspns(sockfd, &rspns_packet);
+    printf("%s", rspns_packet.text);
 }
 // 处理注册命令
 void register_user(int sockfd)

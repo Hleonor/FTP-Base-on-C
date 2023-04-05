@@ -12,9 +12,9 @@
 //客户机侦听数据连接请求的端口
 #define DATA_PORT 5850
 //命令报文参数缓存的大小
-#define CMD_PARAM_SIZE 256
+#define CMD_PARAM_SIZE 512
 //回复报文消息缓存的大小
-#define RSPNS_TEXT_SIZE 256
+#define RSPNS_TEXT_SIZE 512
 #define BACKLOG 10
 #define DATA_BUFSIZE 4096
 

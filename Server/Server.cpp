@@ -77,15 +77,13 @@ DWORD WINAPI ThreadFunc(LPVOID lpParam)
     // 先打印客户端的IP地址和端口号:
     printf("Serve client %s:%d\n", inet_ntoa(clientaddr.sin_addr), ntohs(clientaddr.sin_port));
 
-    if (LoginOrRegister(lpParam) == 0) // 如果登录或注册失败，LoginOrRegister函数返回0
-    {
-        return 0;
-    }
 
     // 定义一个服务器的回复报文
     RspnsPacket rspns = {OK,
                          "欢迎使用该系统\n"
                          "可以使用的命令:\n"
+                         "Login\t    <<登录命令，格式{Login \"用户名\"-\"密码\"}>>\n"
+                         "Register\t<<注册命令，格式{Register \"用户名\"-\"密码\"}>>\n"
                          "ls\t<<展示当前目录下的文件(夹)>>\n"
                          "pwd\t<<展示当前目录的绝对路径>>\n"
                          "cd\t<<切换目录命令，格式{cd \"目录名\"}>>\n"
@@ -268,19 +266,13 @@ int Login(SOCKET tcps, const char* name_and_passwd)
     char *p;
     FILE *file;
 
-
     // 从文件中读取用户名和密码
     file = fopen("../cmake-build-debug/userInfo/user.txt", "r");
     if (file == NULL)
     {
         printf("打开文件失败!\n");
-        RspnsPacket response = {ERR,
-                                "登录失败，服务端无法读取用户文件!\n"};
-        strcpy(response.text, "登录失败，服务端无法读取用户文件!\n");
-        SendRspns(tcps, &response);
         return 0;
     }
-
 
     // 逐行读取文件
     while (fgets(name_and_passwd_in_file, 64, file) != NULL)
@@ -290,9 +282,7 @@ int Login(SOCKET tcps, const char* name_and_passwd)
         if (p == NULL)
         {
             printf("用户名或密码错误!\n");
-            RspnsPacket response = {ERR, "登录失败，服务端读取用户文件错误!\n"};
-            strcpy(response.text, "登录失败，服务端读取用户文件错误!\n");
-            SendRspns(tcps, &response);
+
             fclose(file);
             return 0;
         }
@@ -306,26 +296,19 @@ int Login(SOCKET tcps, const char* name_and_passwd)
         if (p == NULL)
         {
             printf("用户名或密码错误!\n");
-            RspnsPacket response = {ERR, "登录失败，用户名或密码错误!\n"};
-            strcpy(response.text, "登录失败，用户名或密码错误!\n");
-            SendRspns(tcps, &response);
+
             fclose(file);
             return 0;
         }
         if (strncmp(name, name_and_passwd, p - name_and_passwd) == 0 && strcmp(passwd, p + 1) == 0)
         {
             printf("登录成功!\n");
-            RspnsPacket response = {OK, "登录成功!\n"};
-            strcpy(response.text, "登录成功!\n");
-            SendRspns(tcps, &response);
+
             fclose(file);
             return 1;
         }
     }
     printf("登录失败，用户名或密码错误!\n");
-    RspnsPacket response = {ERR, "登录失败，用户名或密码错误!\n"};
-    strcpy(response.text, "登录失败，用户名或密码错误!\n");
-    SendRspns(tcps, &response);
     fclose(file);
     return 0;
 }
@@ -343,9 +326,7 @@ int Register(SOCKET tcps, const char* name_and_passwd)
     if (file == NULL)
     {
         printf("打开文件失败!\n");
-        RspnsPacket response = {ERR, "注册失败，服务端无法读取用户文件!\n"};
-        strcpy(response.text, "注册失败，服务端无法读取用户文件!\n");
-        SendRspns(tcps, &response);
+
         return 0;
     }
     int username_exists = 0; // 标记用户名是否已经存在
@@ -358,9 +339,7 @@ int Register(SOCKET tcps, const char* name_and_passwd)
         if (file == NULL)
         {
             printf("打开文件失败!\n");
-            RspnsPacket response = {ERR, "注册失败，服务端无法读取用户文件!\n"};
-            strcpy(response.text, "注册失败，服务端无法读取用户文件!\n");
-            SendRspns(tcps, &response);
+
             return 0;
         }
         fputs(name_and_passwd, file);
@@ -375,9 +354,7 @@ int Register(SOCKET tcps, const char* name_and_passwd)
         if (p == NULL)
         {
             printf("文件中的用户名密码格式不正确!\n");
-            RspnsPacket response = {ERR, "注册失败，文件中的用户名密码格式不正确!\n"};
-            strcpy(response.text, "注册失败，文件中的用户名密码格式不正确!\n");
-            SendRspns(tcps, &response);
+
             fclose(file);
             return 0;
         }
@@ -385,9 +362,7 @@ int Register(SOCKET tcps, const char* name_and_passwd)
         if (strcmp(name_and_passwd, name_and_passwd_in_file) == 0)
         {
             printf("用户名已经存在!\n");
-            RspnsPacket response = {ERR, "注册失败，用户名已经存在!\n"};
-            strcpy(response.text, "注册失败，用户名已经存在!\n");
-            SendRspns(tcps, &response);
+
             username_exists = 1;
             break;
         }
@@ -404,15 +379,10 @@ int Register(SOCKET tcps, const char* name_and_passwd)
     if (file == NULL)
     {
         printf("打开文件失败!\n");
-        RspnsPacket response = {ERR, "注册失败，服务端无法读取用户文件!\n"};
-        strcpy(response.text, "注册失败，服务端无法读取用户文件!\n");
-        SendRspns(tcps, &response);
+
         return 0;
     }
     fprintf(file, "%s\n", name_and_passwd); // 将用户名和密码写入文件并换行
-    RspnsPacket response = {OK, "注册成功!\n"};
-    strcpy(response.text, "注册成功!\n");
-    SendRspns(tcps, &response);
     fclose(file);
     return 1;
 }
@@ -431,8 +401,7 @@ int Register(SOCKET tcps, const char* name_and_passwd)
 int ProcessCmd(SOCKET tcps, CmdPacket *pCmd, SOCKADDR_IN *pClientAddr)
 {
     SOCKET datatcps;   // 数据连接套接字
-    SOCKET socketForLogin; // 用于登录的套接字
-    SOCKET socketForRegister; // 用于注册的套接字
+
     RspnsPacket rspns;  // 回复报文
     FILE *file;
     char downloadPath[256] = "../cmake-build-debug/SharingFiles/";
@@ -445,62 +414,46 @@ int ProcessCmd(SOCKET tcps, CmdPacket *pCmd, SOCKADDR_IN *pClientAddr)
     switch (pCmd->cmdid)
     {
         case LOGIN: // 登录
-            // 创建新的数据连接套接字
-            if (!InitDataSocket(&socketForLogin, pClientAddr))
-            {
-                rspns.rspnsid = ERR;
-                strcpy(rspns.text, "登录失败，无法创建数据连接套接字!\n");
-                SendRspns(socketForLogin, &rspns);
-                return 0;
-            }
-            if (Login(socketForLogin, pCmd->param))
+            if (Login(tcps, pCmd->param))
             {
                 rspns.rspnsid = OK;
                 strcpy(rspns.text, "登录成功!\n");
-                SendRspns(socketForLogin, &rspns);
+                SendRspns(tcps, &rspns);
             }
             else
             {
                 rspns.rspnsid = ERR;
                 strcpy(rspns.text, "登录失败!\n");
-                SendRspns(socketForLogin, &rspns);
+                SendRspns(tcps, &rspns);
                 return 0;
             }
             break;
         case REGISTER: // 注册
-            // 创建新的数据连接套接字
-            if (!InitDataSocket(&socketForRegister, pClientAddr))
-            {
-                rspns.rspnsid = ERR;
-                strcpy(rspns.text, "注册失败，无法创建数据连接套接字!\n");
-                SendRspns(socketForRegister, &rspns);
-                return 0;
-            }
-            if (Register(socketForRegister, pCmd->param))
+            if (Register(tcps, pCmd->param))
             {
                 rspns.rspnsid = OK;
                 strcpy(rspns.text, "注册成功!\n");
-                SendRspns(socketForRegister, &rspns);
+                SendRspns(tcps, &rspns);
             }
             else
             {
                 rspns.rspnsid = ERR;
                 strcpy(rspns.text, "注册失败!\n");
-                SendRspns(socketForRegister, &rspns);
+                SendRspns(tcps, &rspns);
                 return 0;
             }
             // 注册完了以后直接以新注册的账号登录
-            if (Login(socketForRegister, pCmd->param))
+            if (Login(tcps, pCmd->param))
             {
                 rspns.rspnsid = OK;
                 strcpy(rspns.text, "以新注册的账号登录成功!\n");
-                SendRspns(socketForRegister, &rspns);
+                SendRspns(tcps, &rspns);
             }
             else
             {
                 rspns.rspnsid = ERR;
                 strcpy(rspns.text, "以新注册的账号登录失败!\n");
-                SendRspns(socketForRegister, &rspns);
+                SendRspns(tcps, &rspns);
                 return 0;
             }
             break;
