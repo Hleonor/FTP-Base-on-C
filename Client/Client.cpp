@@ -13,12 +13,6 @@
 void do_read_rspns(SOCKET fd, RspnsPacket *ptr)
 {
     int count = 0;
-    /**
-     * 如果读取的数据大小超过了RspnsPacket结构体的大小，那么后面的数据就会被截断
-     * 因为程序并没有为超过RspnsPacket大小的数据预留空间。
-     * 而如果读取的数据大小小于RspnsPacket结构体的大小
-     * 则程序会一直阻塞等待直到读取完整个结构体。
-     */
     int size = sizeof(RspnsPacket);
     while (count < size)
     {
@@ -322,8 +316,64 @@ void quit(int sockfd)
     getchar();
 }
 
+// 登录，并且构造的报文形式为“用户名 密码”，以该形式作为参数传递给服务器
+void login(int sockfd)
+{
+    int sin_size;
+    int nRead;
+    CmdPacket cmd_packet;
+    SOCKET newsockfd, data_sockfd;
+    struct sockaddr_in their_addr;
+    char name_and_passwd[50];
+    char databuf[DATA_BUFSIZE];
+
+    // 创建数据连接并侦听服务器的连接请求：
+    newsockfd = create_data_socket();
+
+    // 输入用户名和密码
+    scanf("%s", &name_and_passwd);
+
+    // 构建登录命令报文并发送
+    cmd_packet.cmdid = LOGIN;
+    strcpy(cmd_packet.param, name_and_passwd);
+    do_write_cmd(sockfd, &cmd_packet);
+    sin_size = sizeof(struct sockaddr_in);
+    if ((data_sockfd = accept(newsockfd, (struct sockaddr *) &their_addr, &sin_size)) == INVALID_SOCKET)
+    {
+        printf("登录失败！\n");
+        closesocket(newsockfd);
+        return;
+    }
+    // 读取服务器的回复报文
+    nRead = recv(data_sockfd, databuf, DATA_BUFSIZE, 0);
+    databuf[nRead] = '\0';
+    if (nRead <= 0)
+    {
+        printf("登录失败！\n");
+        closesocket(newsockfd);
+        closesocket(data_sockfd);
+        return;
+    }
+    printf("%s", databuf);
+}
+// 处理注册命令
+void register_user(int sockfd)
+{
+    CmdPacket cmd_packet;
+    RspnsPacket rspns_packet;
+
+    char name_and_passwd[50];
+    scanf("%s", &name_and_passwd);
+    cmd_packet.cmdid = REGISTER;
+    strcpy(cmd_packet.param, name_and_passwd);
+    do_write_cmd(sockfd, &cmd_packet);
+    do_read_rspns(sockfd, &rspns_packet);
+    printf("%s", rspns_packet.text);
+}
+
 int main()
 {
+    setbuf(stdout,NULL);
     SOCKET sockfd;
     struct sockaddr_in their_addr;
     char cmd[10];
@@ -382,6 +432,12 @@ int main()
         scanf("%s", cmd);
         switch (cmd[0])
         {
+            case 'L': // 处理login命令
+                login(sockfd);
+                break;
+            case 'R': // 处理register命令
+                register_user(sockfd);
+                break;
             case 'l': // 处理List命令
                 list(sockfd);
                 break;

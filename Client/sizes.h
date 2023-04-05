@@ -7,37 +7,37 @@
 
 #pragma once
 
-//æœåŠ¡å™¨ä¾¦å¬æŽ§åˆ¶è¿žæŽ¥è¯·æ±‚çš„ç«¯å£
+//·þÎñÆ÷ÕìÌý¿ØÖÆÁ¬½ÓÇëÇóµÄ¶Ë¿Ú
 #define CMD_PORT 5858
-//å®¢æˆ·æœºä¾¦å¬æ•°æ®è¿žæŽ¥è¯·æ±‚çš„ç«¯å£
+//¿Í»§»úÕìÌýÊý¾ÝÁ¬½ÓÇëÇóµÄ¶Ë¿Ú
 #define DATA_PORT 5850
-//å‘½ä»¤æŠ¥æ–‡å‚æ•°ç¼“å­˜çš„å¤§å°
+//ÃüÁî±¨ÎÄ²ÎÊý»º´æµÄ´óÐ¡
 #define CMD_PARAM_SIZE 256
-//å›žå¤æŠ¥æ–‡æ¶ˆæ¯ç¼“å­˜çš„å¤§å°
+//»Ø¸´±¨ÎÄÏûÏ¢»º´æµÄ´óÐ¡
 #define RSPNS_TEXT_SIZE 256
 #define BACKLOG 10
 #define DATA_BUFSIZE 4096
 
-// å‘½ä»¤ç±»åž‹
+// ÃüÁîÀàÐÍ
 typedef enum
 {
-    LS, PWD, CD, DOWN, UP, QUIT
+    LS, PWD, CD, DOWN, UP, QUIT, LOGIN, REGISTER
 } CmdID;
 
-// å‘½ä»¤æŠ¥æ–‡,ä»Žå®¢æˆ·ç«¯å‘å¾€æœåŠ¡å™¨
+// ÃüÁî±¨ÎÄ,´Ó¿Í»§¶Ë·¢Íù·þÎñÆ÷
 typedef struct _CmdPacket
 {
     CmdID cmdid;
     char param[CMD_PARAM_SIZE];
 } CmdPacket;
 
-// å›žå¤æŠ¥æ–‡çš„ç±»åž‹
+// »Ø¸´±¨ÎÄµÄÀàÐÍ
 typedef enum
 {
     OK, ERR
 } RspnsID;
 
-// å›žå¤æŠ¥æ–‡,ä»ŽæœåŠ¡å™¨å‘å¾€å®¢æˆ·ç«¯
+// »Ø¸´±¨ÎÄ,´Ó·þÎñÆ÷·¢Íù¿Í»§¶Ë
 typedef struct _RspnsPacket
 {
     RspnsID rspnsid;

@@ -20,7 +20,7 @@
 //命令类型
 typedef enum
 {
-    LS, PWD, CD, DOWN, UP, QUIT
+    LS, PWD, CD, DOWN, UP, QUIT, LOGIN, REGISTER
 } CmdID;
 
 // 命令报文,从客户端发往服务器
